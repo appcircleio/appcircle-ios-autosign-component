@@ -1,0 +1,41 @@
+platform: iOS
+buildPlatform:
+displayName: Resign IPA
+description: "Resign IPA with different certificates and provisioning profiles."
+inputs:
+- key: "AC_RESIGN_FILE_URL"
+  defaultValue: "$ResignFileUrl"
+  isRequired: true
+  title: IPA Path
+  description: "Path to the ipa file to resign"  
+  helpText:
+- key: "AC_RESIGN_TARGETS"
+  defaultValue: "$Targets"
+  isRequired: true
+  title: Targets
+  description: "iOS Targets."
+  helpText:
+- key: "AC_RESIGN_FILENAME"
+  defaultValue: "$ResignFileName"
+  isRequired: true
+  title: File Name
+  description: "Original file name"
+  helpText:
+- key: "AC_APP_IDENTIFIERS"
+  defaultValue: "$ResignFileName"
+  isRequired: true
+  title: BundleId array to use in fastlane
+  description: "BundleIds as params to fastlane"
+  helpText:
+- key: "AC_PROVISIONING_PATHS"
+  defaultValue: "$ResignFileName"
+  isRequired: true
+  title: Provision name and paths
+  description: "Provision profile names and paths for fastlane"
+  helpText:
+
+outputs:
+processFilename: bash
+processArguments: '%AC_STEP_TEMP%/main.sh'
+files:
+- "main.sh"
