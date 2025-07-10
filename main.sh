@@ -2,15 +2,17 @@
 
 printenv | grep AC_
 
-echo "IPAFileName:$AC_APP_FILE_NAME"
-echo "IPAFileUrl:$AC_RESIGN_FILE_URL"
+echo "AC_RESIGN_FILENAME:$AC_RESIGN_FILENAME"
+echo "AC_RESIGN_FILE_URL:$AC_RESIGN_FILE_URL"
 
-echo "AppStoreConnectApiKey:$AC_API_KEY"
-echo "AppStoreConnectApiKeyFileName:$AC_API_KEY_FILE_NAME"
+echo "AC_API_KEY:$AC_API_KEY"
+echo "AC_API_KEY_FILE_NAME:$AC_API_KEY_FILE_NAME"
 echo "AC_FASTFILE_CONFIG:$AC_FASTFILE_CONFIG"
 echo "AC_CERTIFICATE_NAME:$AC_CERTIFICATE_NAME"
+echo "AC_APP_IDENTIFIERS:$AC_APP_IDENTIFIERS"
+echo "AC_PROVISIONING_PATHS:$AC_PROVISIONING_PATHS"
 
-curl -o "./$AC_APP_FILE_NAME" -k "$AC_RESIGN_FILE_URL"
+curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 
 bundle init
         echo "gem \"fastlane\"">>Gemfile
@@ -27,6 +29,6 @@ bundle exec fastlane prepare_signing \
 
 fastlane resign_release \
   provisioning_profile_mapping:$AC_PROVISIONING_PATHS \
-  ipa_file:"./$AC_APP_FILE_NAME" \
+  ipa_file:"./$AC_RESIGN_FILENAME" \
   certificate_name:"./$AC_CERTIFICATE_NAME" \
   output_dir:"$AC_OUTPUT_DIR" 
