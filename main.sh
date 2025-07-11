@@ -14,6 +14,8 @@ echo "AC_PROVISIONING_PATHS:$AC_PROVISIONING_PATHS"
 
 curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 
+AC_PROVISION_PROFILE_PATHS="$AC_TEMP_DIR/fastlane-resign"
+
 bundle init
         echo "gem \"fastlane\"">>Gemfile
         bundle install
@@ -25,10 +27,11 @@ bundle init
 
 bundle exec fastlane prepare_signing \
   app_identifiers:$AC_APP_IDENTIFIERS \
-  output_path:"$AC_TEMP_DIR/fastlane-resign"
+  output_path:"$AC_PROVISION_PROFILE_PATHS"
 
-fastlane resign_release \
-  provisioning_profile_mapping:$AC_PROVISIONING_PATHS \
+bundle exec fastlane resign_release \
+  app_identifiers:$AC_APP_IDENTIFIERS \
+  provision_profiles_path:"$AC_PROVISION_PROFILE_PATHS" \
   ipa_file:"./$AC_RESIGN_FILENAME" \
   certificate_name:"./$AC_CERTIFICATE_NAME" \
   output_dir:"$AC_OUTPUT_DIR" 
