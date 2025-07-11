@@ -35,3 +35,5 @@ bundle exec fastlane resign_release \
   ipa_file:"./$AC_RESIGN_FILENAME" \
   certificate_name:"$AC_CERTIFICATE_NAME" \
   output_dir:"$AC_OUTPUT_DIR" 
+
+  mv "./$AC_RESIGN_FILENAME" "$AC_OUTPUT_DIR/"
