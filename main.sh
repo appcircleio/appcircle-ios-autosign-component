@@ -33,5 +33,5 @@ bundle exec fastlane resign_release \
   app_identifiers:$AC_APP_IDENTIFIERS \
   provision_profiles_path:"$AC_PROVISION_PROFILE_PATHS" \
   ipa_file:"./$AC_RESIGN_FILENAME" \
-  certificate_name:"./$AC_CERTIFICATE_NAME" \
+  certificate_name:"$AC_CERTIFICATE_NAME" \
   output_dir:"$AC_OUTPUT_DIR" 
