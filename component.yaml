@@ -27,12 +27,6 @@ inputs:
   title: BundleId array to use in fastlane
   description: "BundleIds as params to fastlane"
   helpText:
-- key: "AC_PROVISIONING_PATHS"
-  defaultValue: "$AC_PROVISIONING_PATHS"
-  isRequired: true
-  title: Provision name and paths
-  description: "Provision profile names and paths for fastlane"
-  helpText:
 
 outputs:
 processFilename: bash
