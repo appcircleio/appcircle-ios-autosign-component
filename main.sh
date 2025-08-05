@@ -13,6 +13,31 @@ echo "AC_APP_IDENTIFIERS:$AC_APP_IDENTIFIERS"
 curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 
 AC_PROVISION_PROFILE_PATHS="$AC_TEMP_DIR/fastlane-resign"
+PROVISIONING_PROFILE_MAPS="${ProvisioningProfileMaps}"
+
+if [[ -n "$AC_PROVISIONING_PROFILES" && -n "$PROVISIONING_PROFILE_MAPS"]]; then
+  mkdir -p "$AC_PROVISION_PROFILE_PATHS"
+
+  IFS='|' read -ra PROFILES <<< "$AC_PROVISIONING_PROFILES"
+
+  echo "$PROVISIONING_PROFILE_MAPS" | jq -c '.[]' | while read -r entry; do
+    bundle_id=$(echo "$entry" | jq -r '.bundleId')
+    profile_id=$(echo "$entry" | jq -r '.provisioningProfileId')
+
+    for profile_path in "${PROFILES[@]}"; do
+      filename=$(basename "$profile_path")
+
+      if [[ "$filename" == *"$profile_id"* ]]; then
+        dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
+        echo "Using provided (pre-selected) provision profile for: $bundle_id"
+        echo "Copying $profile_path -> $dest"
+        cp "$profile_path" "$dest"
+      fi
+    done
+  done
+else
+  echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
+fi
 
 bundle init
         echo "gem \"fastlane\"">>Gemfile
