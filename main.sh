@@ -25,8 +25,8 @@ if [[ -n "$AC_PROVISIONING_PROFILES" && -n "$PROVISIONING_PROFILE_MAPS" ]]; then
   IFS='|' read -ra PROFILES <<< "$AC_PROVISIONING_PROFILES"
 
   echo "$PROVISIONING_PROFILE_MAPS" | jq -c '.[]' | while read -r entry; do
-    bundle_id=$(echo "$entry" | jq -r '.bundleId')
-    profile_id=$(echo "$entry" | jq -r '.provisioningProfileId')
+    bundle_id=$(echo "$entry" | jq -r '.BundleId')
+    profile_id=$(echo "$entry" | jq -r '.ProvisioningProfileId')
 
     for profile_path in "${PROFILES[@]}"; do
       filename=$(basename "$profile_path")
