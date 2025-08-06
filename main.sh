@@ -38,6 +38,35 @@ else
   echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
 fi
 
+IFS=' ' read -ra ALL_APP_IDENTIFIERS <<< "$AC_APP_IDENTIFIERS"
+
+# Parse already handled bundleIds from ProvisioningProfileMaps
+HANDLED_APP_IDENTIFIERS=()
+if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
+  while IFS= read -r id; do
+    HANDLED_APP_IDENTIFIERS+=("$id")
+  done < <(echo "$PROVISIONING_PROFILE_MAPS" | jq -r '.[].BundleId')
+fi
+
+# Calculate difference: items in ALL_APP_IDENTIFIERS but not in HANDLED_APP_IDENTIFIERS
+AC_APP_IDENTIFIERS_TO_DOWNLOAD=""
+for id in "${ALL_APP_IDENTIFIERS[@]}"; do
+  skip=false
+  for handled in "${HANDLED_APP_IDENTIFIERS[@]}"; do
+    if [[ "$id" == "$handled" ]]; then
+      skip=true
+      break
+    fi
+  done
+  if [[ "$skip" == false ]]; then
+    AC_APP_IDENTIFIERS_TO_DOWNLOAD+="$id "
+  fi
+done
+
+AC_APP_IDENTIFIERS_TO_DOWNLOAD=$(echo "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" | xargs)
+
+echo "AC_APP_IDENTIFIERS_TO_DOWNLOAD: $AC_APP_IDENTIFIERS_TO_DOWNLOAD"
+
 bundle init
         echo "gem \"fastlane\"">>Gemfile
         bundle install
@@ -48,7 +77,7 @@ bundle init
         mv "$AC_API_KEY" "$AC_API_KEY_FILE_NAME"
 
 bundle exec fastlane prepare_signing \
-  app_identifiers:$AC_APP_IDENTIFIERS \
+  app_identifiers:$AC_APP_IDENTIFIERS_TO_DOWNLOAD \
   output_path:"$AC_PROVISION_PROFILE_PATHS"
 
 bundle exec fastlane resign_release \
