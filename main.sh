@@ -15,7 +15,6 @@ curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 AC_PROVISION_PROFILE_PATHS="$AC_TEMP_DIR/fastlane-resign"
 PROVISIONING_PROFILE_MAPS="$ProvisioningProfileMaps"
 
-echo "PROVISIONING_PROFILE_MAPS:$PROVISIONING_PROFILE_MAPS"
 echo "AC_PROVISIONING_PROFILES:$AC_PROVISIONING_PROFILES"
 echo "AC_PROVISION_PROFILE_PATHS:$AC_PROVISION_PROFILE_PATHS"
 
@@ -32,12 +31,12 @@ if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
 
     if [[ -n "$bundle_id" && -n "$profile_base64" ]]; then
       dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
-      echo "Writing provision profile for: $bundle_id -> $dest"
+      echo "Writing pre-selected provision profile for: $bundle_id -> $dest"
       echo "$profile_base64" | base64 -d > "$dest"
 
       jq --arg key "$bundle_id" --arg value "$dest" '. + {($key): $value}' "$TMP_PROFILE_MAP" > "${TMP_PROFILE_MAP}.tmp" && mv "${TMP_PROFILE_MAP}.tmp" "$TMP_PROFILE_MAP"
     else
-      echo "Missing bundle_id or file content for bundle $bundle_id in provisioning profile map. Skipping..."
+      echo "Missing bundle_id or file content for bundle $bundle_id in pre-selected provisioning profile map. Skipping..."
     fi
   done
   cp "$TMP_PROFILE_MAP" "$PROFILE_MAPPING_FILE"
@@ -90,7 +89,6 @@ if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
 else
   echo "✅ All provision profiles are pre-selected. Nothing will be downloaded from App Store Connect."
 fi
-
 
 bundle exec fastlane resign_release \
   app_identifiers:$AC_APP_IDENTIFIERS \
