@@ -45,7 +45,7 @@ else
   echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
 fi
 
-IFS=' ' read -ra ALL_APP_IDENTIFIERS <<< "$AC_APP_IDENTIFIERS"
+IFS=',' read -ra ALL_APP_IDENTIFIERS <<< "$AC_APP_IDENTIFIERS"
 
 HANDLED_APP_IDENTIFIERS=()
 if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
