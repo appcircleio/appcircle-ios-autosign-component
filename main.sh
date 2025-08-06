@@ -19,25 +19,20 @@ echo "PROVISIONING_PROFILE_MAPS:$PROVISIONING_PROFILE_MAPS"
 echo "AC_PROVISIONING_PROFILES:$AC_PROVISIONING_PROFILES"
 echo "AC_PROVISION_PROFILE_PATHS:$AC_PROVISION_PROFILE_PATHS"
 
-if [[ -n "$AC_PROVISIONING_PROFILES" && -n "$PROVISIONING_PROFILE_MAPS" ]]; then
+if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
   mkdir -p "$AC_PROVISION_PROFILE_PATHS"
-
-  IFS='|' read -ra PROFILES <<< "$AC_PROVISIONING_PROFILES"
 
   echo "$PROVISIONING_PROFILE_MAPS" | jq -c '.[]' | while read -r entry; do
     bundle_id=$(echo "$entry" | jq -r '.BundleId')
-    profile_id=$(echo "$entry" | jq -r '.ProvisioningProfileId')
+    profile_base64=$(echo "$entry" | jq -r '.File')
 
-    for profile_path in "${PROFILES[@]}"; do
-      filename=$(basename "$profile_path")
-
-      if [[ "$filename" == *"$profile_id"* ]]; then
-        dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
-        echo "Using provided (pre-selected) provision profile for: $bundle_id"
-        echo "Copying $profile_path -> $dest"
-        cp "$profile_path" "$dest"
-      fi
-    done
+    if [[ -n "$bundle_id" && -n "$profile_base64" ]]; then
+      dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
+      echo "Writing provision profile for: $bundle_id -> $dest"
+      echo "$profile_base64" | base64 -d > "$dest"
+    else
+      echo "Missing bundle_id or file content for bundle $bundle_id in provisioning profile map. Skipping..."
+    fi
   done
 else
   echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
