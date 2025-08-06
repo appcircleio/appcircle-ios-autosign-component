@@ -21,6 +21,10 @@ echo "AC_PROVISION_PROFILE_PATHS:$AC_PROVISION_PROFILE_PATHS"
 
 if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
   mkdir -p "$AC_PROVISION_PROFILE_PATHS"
+  PROFILE_MAPPING_FILE="$AC_PROVISION_PROFILE_PATHS/profile_mapping.json"
+
+  TMP_PROFILE_MAP=$(mktemp)
+  echo "{}" > "$TMP_PROFILE_MAP"
 
   echo "$PROVISIONING_PROFILE_MAPS" | jq -c '.[]' | while read -r entry; do
     bundle_id=$(echo "$entry" | jq -r '.BundleId')
@@ -30,17 +34,20 @@ if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
       dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
       echo "Writing provision profile for: $bundle_id -> $dest"
       echo "$profile_base64" | base64 -d > "$dest"
+
+      jq --arg key "$bundle_id" --arg value "$dest" '. + {($key): $value}' "$TMP_PROFILE_MAP" > "${TMP_PROFILE_MAP}.tmp" && mv "${TMP_PROFILE_MAP}.tmp" "$TMP_PROFILE_MAP"
     else
       echo "Missing bundle_id or file content for bundle $bundle_id in provisioning profile map. Skipping..."
     fi
   done
+  cp "$TMP_PROFILE_MAP" "$PROFILE_MAPPING_FILE"
+  echo "✅ profile_mapping.json created at: $PROFILE_MAPPING_FILE"
 else
   echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
 fi
 
 IFS=' ' read -ra ALL_APP_IDENTIFIERS <<< "$AC_APP_IDENTIFIERS"
 
-# Parse already handled bundleIds from ProvisioningProfileMaps
 HANDLED_APP_IDENTIFIERS=()
 if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
   while IFS= read -r id; do
@@ -48,7 +55,6 @@ if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
   done < <(echo "$PROVISIONING_PROFILE_MAPS" | jq -r '.[].BundleId')
 fi
 
-# Calculate difference: items in ALL_APP_IDENTIFIERS but not in HANDLED_APP_IDENTIFIERS
 AC_APP_IDENTIFIERS_TO_DOWNLOAD=""
 for id in "${ALL_APP_IDENTIFIERS[@]}"; do
   skip=false
