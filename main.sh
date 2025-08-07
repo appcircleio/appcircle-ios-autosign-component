@@ -64,7 +64,10 @@ for id in "${ALL_APP_IDENTIFIERS[@]}"; do
     fi
   done
   if [[ "$skip" == false ]]; then
-    AC_APP_IDENTIFIERS_TO_DOWNLOAD+="$id "
+    if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
+      AC_APP_IDENTIFIERS_TO_DOWNLOAD+=","
+    fi
+    AC_APP_IDENTIFIERS_TO_DOWNLOAD+="$id"
   fi
 done
 
