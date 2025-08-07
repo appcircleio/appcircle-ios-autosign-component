@@ -13,6 +13,67 @@ echo "AC_APP_IDENTIFIERS:$AC_APP_IDENTIFIERS"
 curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 
 AC_PROVISION_PROFILE_PATHS="$AC_TEMP_DIR/fastlane-resign"
+PROVISIONING_PROFILE_MAPS="$ProvisioningProfileMaps"
+
+echo "AC_PROVISIONING_PROFILES:$AC_PROVISIONING_PROFILES"
+echo "AC_PROVISION_PROFILE_PATHS:$AC_PROVISION_PROFILE_PATHS"
+
+if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
+  mkdir -p "$AC_PROVISION_PROFILE_PATHS"
+  PROFILE_MAPPING_FILE="$AC_PROVISION_PROFILE_PATHS/profile_mapping.json"
+
+  TMP_PROFILE_MAP=$(mktemp)
+  echo "{}" > "$TMP_PROFILE_MAP"
+
+  echo "$PROVISIONING_PROFILE_MAPS" | jq -c '.[]' | while read -r entry; do
+    bundle_id=$(echo "$entry" | jq -r '.BundleId')
+    profile_base64=$(echo "$entry" | jq -r '.File')
+
+    if [[ -n "$bundle_id" && -n "$profile_base64" ]]; then
+      dest="$AC_PROVISION_PROFILE_PATHS/$bundle_id.mobileprovision"
+      echo "Writing pre-selected provision profile for: $bundle_id -> $dest"
+      echo "$profile_base64" | base64 -d > "$dest"
+
+      jq --arg key "$bundle_id" --arg value "$dest" '. + {($key): $value}' "$TMP_PROFILE_MAP" > "${TMP_PROFILE_MAP}.tmp" && mv "${TMP_PROFILE_MAP}.tmp" "$TMP_PROFILE_MAP"
+    else
+      echo "Missing bundle_id or file content for bundle $bundle_id in pre-selected provisioning profile map. Skipping..."
+    fi
+  done
+  cp "$TMP_PROFILE_MAP" "$PROFILE_MAPPING_FILE"
+  echo "✅ profile_mapping.json created at: $PROFILE_MAPPING_FILE"
+else
+  echo "Pre-selected provision profiles are not found, provision profiles will be tried to download using App Store Connect services"
+fi
+
+IFS=',' read -ra ALL_APP_IDENTIFIERS <<< "$AC_APP_IDENTIFIERS"
+
+HANDLED_APP_IDENTIFIERS=()
+if [[ -n "$PROVISIONING_PROFILE_MAPS" ]]; then
+  while IFS= read -r id; do
+    HANDLED_APP_IDENTIFIERS+=("$id")
+  done < <(echo "$PROVISIONING_PROFILE_MAPS" | jq -r '.[].BundleId')
+fi
+
+AC_APP_IDENTIFIERS_TO_DOWNLOAD=""
+for id in "${ALL_APP_IDENTIFIERS[@]}"; do
+  skip=false
+  for handled in "${HANDLED_APP_IDENTIFIERS[@]}"; do
+    if [[ "$id" == "$handled" ]]; then
+      skip=true
+      break
+    fi
+  done
+  if [[ "$skip" == false ]]; then
+    if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
+      AC_APP_IDENTIFIERS_TO_DOWNLOAD+=","
+    fi
+    AC_APP_IDENTIFIERS_TO_DOWNLOAD+="$id"
+  fi
+done
+
+AC_APP_IDENTIFIERS_TO_DOWNLOAD=$(echo "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" | xargs)
+
+echo "AC_APP_IDENTIFIERS_TO_DOWNLOAD: $AC_APP_IDENTIFIERS_TO_DOWNLOAD"
 
 bundle init
         echo "gem \"fastlane\"">>Gemfile
@@ -23,9 +84,14 @@ bundle init
         mv $AC_FASTFILE_CONFIG "fastlane/Fastfile"
         mv "$AC_API_KEY" "$AC_API_KEY_FILE_NAME"
 
-bundle exec fastlane prepare_signing \
-  app_identifiers:$AC_APP_IDENTIFIERS \
-  output_path:"$AC_PROVISION_PROFILE_PATHS"
+if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
+  echo "Some app identifiers are not pre-selected, trying to download missing provision profiles via App Store Connect..."
+  bundle exec fastlane prepare_signing \
+    app_identifiers:"$AC_APP_IDENTIFIERS_TO_DOWNLOAD" \
+    output_path:"$AC_PROVISION_PROFILE_PATHS"
+else
+  echo "✅ All provision profiles are pre-selected. Nothing will be downloaded from App Store Connect."
+fi
 
 bundle exec fastlane resign_release \
   app_identifiers:$AC_APP_IDENTIFIERS \
