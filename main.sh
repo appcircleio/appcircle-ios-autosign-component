@@ -88,7 +88,8 @@ if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
   echo "Some app identifiers are not pre-selected, trying to download missing provision profiles via App Store Connect..."
   bundle exec fastlane prepare_signing \
     app_identifiers:"$AC_APP_IDENTIFIERS_TO_DOWNLOAD" \
-    output_path:"$AC_PROVISION_PROFILE_PATHS"
+    output_path:"$AC_PROVISION_PROFILE_PATHS"\
+    output_dir:"$AC_OUTPUT_DIR" 
 else
   echo "✅ All provision profiles are pre-selected. Nothing will be downloaded from App Store Connect."
 fi
