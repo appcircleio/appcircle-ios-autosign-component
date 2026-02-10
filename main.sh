@@ -76,7 +76,7 @@ AC_APP_IDENTIFIERS_TO_DOWNLOAD=$(echo "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" | xargs)
 echo "AC_APP_IDENTIFIERS_TO_DOWNLOAD: $AC_APP_IDENTIFIERS_TO_DOWNLOAD"
 
 bundle init
-        echo "gem \"fastlane\"">>Gemfile
+        echo "gem \"fastlane\", \"= 2.231.1\"" >> Gemfile
         bundle install
         mkdir fastlane
         touch fastlane/Appfile
