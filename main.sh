@@ -9,6 +9,7 @@ echo "AC_API_KEY_FILE_NAME:$AC_API_KEY_FILE_NAME"
 echo "AC_FASTFILE_CONFIG:$AC_FASTFILE_CONFIG"
 echo "AC_CERTIFICATE_NAME:$AC_CERTIFICATE_NAME"
 echo "AC_APP_IDENTIFIERS:$AC_APP_IDENTIFIERS"
+echo "AC_FASTLANE_VERSION: $AC_FASTLANE_VERSION"
 
 curl -o "./$AC_RESIGN_FILENAME" -k "$AC_RESIGN_FILE_URL"
 
@@ -76,13 +77,21 @@ AC_APP_IDENTIFIERS_TO_DOWNLOAD=$(echo "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" | xargs)
 echo "AC_APP_IDENTIFIERS_TO_DOWNLOAD: $AC_APP_IDENTIFIERS_TO_DOWNLOAD"
 
 bundle init
-        echo "gem \"fastlane\"">>Gemfile
-        bundle install
-        mkdir fastlane
-        touch fastlane/Appfile
-        touch fastlane/Fastfile
-        mv $AC_FASTFILE_CONFIG "fastlane/Fastfile"
-        mv "$AC_API_KEY" "$AC_API_KEY_FILE_NAME"
+
+if [ -z "$AC_FASTLANE_VERSION" ] || [ "$AC_FASTLANE_VERSION" = "latest" ]; then
+    echo 'gem "fastlane"' >> Gemfile
+    echo "Using latest fastlane version"
+else
+    echo "Using fastlane version: $AC_FASTLANE_VERSION"
+    echo "gem \"fastlane\", \"$AC_FASTLANE_VERSION\"" >> Gemfile
+fi
+
+bundle install
+mkdir fastlane
+touch fastlane/Appfile
+touch fastlane/Fastfile
+mv $AC_FASTFILE_CONFIG "fastlane/Fastfile"
+mv "$AC_API_KEY" "$AC_API_KEY_FILE_NAME"
 
 if [[ -n "$AC_APP_IDENTIFIERS_TO_DOWNLOAD" ]]; then
   echo "Some app identifiers are not pre-selected, trying to download missing provision profiles via App Store Connect..."
